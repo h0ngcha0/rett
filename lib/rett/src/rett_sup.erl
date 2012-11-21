@@ -18,7 +18,7 @@
 
 %%%_* Macros ===================================================================
 %% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(CHILD(I, A, T), {I, {I, start_link, [A]}, permanent, 5000, T, [I]}).
 
 %%%_* Code =====================================================================
 %% API functions
@@ -27,7 +27,20 @@ start_link() ->
 
 %% Supervisor callbacks
 init([]) ->
-  {ok, { {one_for_one, 5, 10}, []} }.
+  Ip     = rett_util:get_env(web_ip, "0.0.0.0"),
+  Port   = rett_util:get_env(web_port, 8000),
+  LogDir = rett_util:get_env(log_dir, "priv/log"),
+
+  {ok, Dispatch} = file:consult(filename:join( code:priv_dir(rett)
+                                             , "dispatch.conf")),
+
+  WebConfig = [ {ip, Ip}
+              , {port, Port}
+              , {log_dir, LogDir}
+              , {dispatch, Dispatch}],
+
+  Web = ?CHILD(webmachine_mochiweb, WebConfig, worker),
+  {ok, { {one_for_one, 5, 10}, [Web]} }.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
