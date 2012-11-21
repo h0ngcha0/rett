@@ -3,3 +3,12 @@ deps
 *.o
 *.beam
 *.plt
+*~
+/lib/*
+!/lib/rett
+/rel/*
+!/rel/reltool.config
+/log/
+index.html
+all_runs.html
+erl_crash.dump
