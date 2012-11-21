@@ -1,8 +1,0 @@
-{application,rett,
-             [{description,"Real Time Erlang Editor"},
-              {vsn,"0.0.1"},
-              {registered,[]},
-              {applications,[kernel,stdlib]},
-              {mod,{rett_app,[]}},
-              {env,[]},
-              {modules,[rett_app,rett_sup]}]}.
