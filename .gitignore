@@ -9,6 +9,7 @@ deps
 /lib/rett/ebin
 /rel/*
 !/rel/reltool.config
+!/rel/files
 /log/
 index.html
 all_runs.html
