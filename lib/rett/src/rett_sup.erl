@@ -18,7 +18,7 @@
 
 %%%_* Macros ===================================================================
 %% Helper macro for declaring children of supervisor
--define(CHILD(I, A, T), {I, {I, start_link, [A]}, permanent, 5000, T, [I]}).
+-define(CHILD(I, A, T), {I, {I, start, [A]}, permanent, 5000, T, [I]}).
 
 %%%_* Code =====================================================================
 %% API functions
@@ -40,7 +40,7 @@ init([]) ->
               , {dispatch, Dispatch}],
 
   Web = ?CHILD(webmachine_mochiweb, WebConfig, worker),
-  {ok, { {one_for_one, 5, 10}, [Web]} }.
+  {ok, {{one_for_one, 5, 10}, [Web]}}.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
