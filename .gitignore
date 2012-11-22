@@ -6,6 +6,7 @@ deps
 *~
 /lib/*
 !/lib/rett
+/lib/rett/ebin
 /rel/*
 !/rel/reltool.config
 /log/
