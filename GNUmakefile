@@ -22,7 +22,7 @@ ct:     ./rebar ct
 
 eunit:  ./rebar eunit
 
-dev_shell: all
+shell: all
 	erl -sname rett -pa $(PWD)/lib/*/ebin -boot start_sasl -config rel/files/sys.config  -s reloader -s rett_app
 
 conf_clean:

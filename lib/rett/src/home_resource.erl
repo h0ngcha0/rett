@@ -22,8 +22,7 @@ allowed_methods(ReqData, State) ->
   {['GET'], ReqData, State}.
 
 to_html(ReqData, State) ->
-  %%{ok, Content} = index_dtl:render([]),
-  Content = "fuck yay",
+  {ok, Content} = index_dtl:render([]),
   {Content, ReqData, State}.
 
 %%%_* Emacs ====================================================================
