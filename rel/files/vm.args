@@ -1,5 +1,5 @@
 ## Name of the node
--name rett
+-sname rett
 
 ## Cookie for distributed erlang
 -setcookie rett
