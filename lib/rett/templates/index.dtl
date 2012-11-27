@@ -1,6 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en">
   <head>
+    <meta charset="utf-8" />
     <title>Realtime Erlang Editor</title>
 
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css" />
@@ -18,9 +19,12 @@
     <script type="text/javascript" src="/static/js/bootstrap.js"></script>
     <script type="text/javascript" src="/static/js/codemirror.js"></script>
     <script type="text/javascript" src="/static/js/erlang.js"></script>
+    <script type="text/javascript" src="/static/js/rett.js"></script>
 
     <script type="text/javascript">
       $(document).ready(function() {
+        var router = new window.RettRouter();
+        router.start();
       });
     </script>
 
@@ -33,44 +37,6 @@
   </head>
 
   <body>
-
-    <form><textarea id="code" name="code">
-      %% -*- mode: erlang; erlang-indent-level: 2 -*-
-      %%% Created :  7 May 2012 by mats cronqvist <masse@klarna.com>
-
-      %% @doc
-      %% Demonstrates how to print a record.
-      %% @end
-
-      -module('ex').
-      -author('mats cronqvist').
-      -export([ demo/0
-              , rec_info/1]).
-
-      -record(demo,{a="One",b="Two",c="Three",d="Four"}).
-
-      rec_info(demo) -> record_info(fields,demo).
-
-      demo() -> expand_recs(?MODULE,#demo{a="A",b="BB"}).
-  
-      expand_recs(M,List) when is_list(List) ->
-        [expand_recs(M,L)||L<-List];
-      expand_recs(M,Tup) when is_tuple(Tup) ->
-        case tuple_size(Tup) of
-          L when L < 1 -> Tup;
-          L ->
-            try Fields = M:rec_info(element(1,Tup)),
-                L = length(Fields)+1,
-                lists:zip(Fields,expand_recs(M,tl(tuple_to_list(Tup))))
-            catch _:_ ->
-               list_to_tuple(expand_recs(M,tuple_to_list(Tup)))
-        end
-      end;
-      expand_recs(_,Term) ->
-        Term.
-      </textarea>
-    </form>
-
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
@@ -80,14 +46,6 @@
       </div>
     </div>
     <div id="content" class="container">
-      <script>
-        var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-        lineNumbers: true,
-        matchBrackets: true,
-        extraKeys: {"Tab":  "indentAuto"},
-        theme: "erlang-dark"
-        });
-      </script>
     </div>
   </body>
 </html>
