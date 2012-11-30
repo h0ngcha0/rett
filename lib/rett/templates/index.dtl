@@ -45,6 +45,14 @@
         </div>
       </div>
     </div>
+    <!--
+    <form id="new-code">
+      <label>ID:</label><input id="code-id-input" name="code-id" type="text"/>
+      <label>Code:</label><input id="code-snippet-input" name="code-snippet" type="text"/>
+    <button>Post</button>
+    </form>
+    -->
+    <hr/>
     <div id="content" class="container">
     </div>
   </body>
