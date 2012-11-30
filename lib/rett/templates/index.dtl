@@ -23,8 +23,8 @@
 
     <script type="text/javascript">
       $(document).ready(function() {
-        var router = new window.RettRouter();
-        router.start();
+        g_appview = new AppView();
+        g_appview.render();
       });
     </script>
 
@@ -45,15 +45,15 @@
         </div>
       </div>
     </div>
-    <!--
     <form id="new-code">
       <label>ID:</label><input id="code-id-input" name="code-id" type="text"/>
       <label>Code:</label><input id="code-snippet-input" name="code-snippet" type="text"/>
-    <button>Post</button>
+      <button>Post</button>
     </form>
-    -->
     <hr/>
-    <div id="content" class="container">
+    <div id="rett" class="container">
+      <div id="code-editors" class="container">
+      </div>
     </div>
   </body>
 </html>
