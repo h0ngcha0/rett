@@ -8,6 +8,7 @@
 %%%_* Exports =================================================================
 -export([ allowed_methods/2
         , init/1
+        , process_post/2
         , to_html/2
         ]).
 
@@ -19,7 +20,10 @@ init([]) ->
   {ok, undefined}.
 
 allowed_methods(ReqData, State) ->
-  {['GET'], ReqData, State}.
+  {['GET', 'POST'], ReqData, State}.
+
+process_post(ReqData, State) ->
+  {true, ReqData, State}.
 
 to_html(ReqData, State) ->
   {ok, Content} = index_dtl:render([]),
