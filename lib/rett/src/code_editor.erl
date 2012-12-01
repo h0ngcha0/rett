@@ -11,6 +11,15 @@
         , delete/1
         , delete_all/0
         , write/1
+        , set_id/2
+        , set_code/2
+        , set_x/2
+        , set_y/2
+        , set_z/2
+        ]).
+
+-export([ to_json/1
+        , from_json/1
         ]).
 
 %%%_* Macro  ===================================================================
@@ -45,15 +54,59 @@ delete(Id) ->
 -spec read_all() -> [code_editor()].
 read_all() ->
   lists:foldl(fun(Key, Acc) ->
-                  [CodeEditor] = mnesia:dirty_read(?TAB_NAME, Key),
-                  [CodeEditor|Acc]
+                  [read(Key)|Acc]
               end, [], mnesia:dirty_all_keys(?TAB_NAME)).
 
 -spec delete_all() -> ok.
 delete_all() ->
   lists:foreach(fun(Key) ->
-                    ok = mnesia:dirty_delete(?TAB_NAME, Key)
+                    ok = delete(Key)
                 end, mnesia:dirty_all_keys(?TAB_NAME)).
+
+set_id(#code_editor{} = CodeEditor, Id) ->
+  CodeEditor#code_editor{id = Id}.
+
+set_code(#code_editor{} = CodeEditor, Code) ->
+  CodeEditor#code_editor{code = Code}.
+
+set_x(#code_editor{} = CodeEditor, X) ->
+  CodeEditor#code_editor{x = X}.
+
+set_y(#code_editor{} = CodeEditor, Y) ->
+  CodeEditor#code_editor{y = Y}.
+
+set_z(#code_editor{} = CodeEditor, Z) ->
+  CodeEditor#code_editor{z = Z}.
+
+%% @doc convert article record to json binary
+to_json(#code_editor{} = CodeEditor) ->
+  CodeEditorFields = { struct
+                     , lists:zip( record_info(fields, code_editor)
+                                , tl(tuple_to_list(CodeEditor)))},
+  mochijson2:encode(CodeEditorFields).
+
+from_json(CodeEditorJson) ->
+  {struct, CodeEditorFields} = mochijson2:decode(CodeEditorJson),
+  populate_code_editor_record(CodeEditorFields).
+
+%% @doc populates the article record based on the article json struct
+%% @end
+populate_code_editor_record(CodeEditorFields) ->
+  lists:foldl(fun({Key, Val}, Article) ->
+                  Fun = set_code_editor_val_fun(Key),
+                  Fun(Article, Val)
+              end, #code_editor{}, CodeEditorFields).
+
+set_code_editor_val_fun(<<"id">>) ->
+  fun set_id/2;
+set_code_editor_val_fun(<<"code">>) ->
+  fun set_code/2;
+set_code_editor_val_fun(<<"x">>) ->
+  fun set_x/2;
+set_code_editor_val_fun(<<"y">>) ->
+  fun set_y/2;
+set_code_editor_val_fun(<<"z">>) ->
+  fun set_z/2.
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:
