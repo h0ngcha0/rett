@@ -17,6 +17,7 @@
 %% Application callbacks
 start() ->
   start_deps(),
+  ensure_tables_exist(),
   application:start(rett).
 
 start(_StartType, _StartArgs) ->
@@ -37,6 +38,7 @@ dependent_applications() ->
   , inets
   , webmachine
   , erlydtl
+  , mnesia
   ].
 
 start_deps() ->
@@ -56,6 +58,19 @@ ensure_start(App) ->
     {error, {already_started, App}} -> ok;
     ok                              -> ok
   end.
+
+ensure_tables_exist() ->
+  lists:foreach(fun ensure_table/1, table_modules()).
+
+ensure_table(Mod) ->
+  case Mod:create_table() of
+    {aborted,{already_exists,_}} -> ok;
+    {atomic, ok}                 -> ok
+  end.
+
+table_modules() ->
+  [ code_editor
+  ].
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

@@ -18,9 +18,11 @@ rel: all
 test:   all
 	eunit ct
 
-ct:     ./rebar ct
+ct: all
+	./rebar ct
 
-eunit:  ./rebar eunit
+eunit: all
+	./rebar eunit
 
 shell: all
 	erl -sname rett -pa $(PWD)/lib/*/ebin -boot start_sasl -config rel/files/sys.config  -s reloader -s rett_app
