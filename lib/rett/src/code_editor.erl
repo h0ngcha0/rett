@@ -8,6 +8,7 @@
 %%%_* Exports ==================================================================
 -export([ read/1
         , read_all/0
+        , create_table/0
         , delete/1
         , delete_all/0
         , write/1
@@ -38,6 +39,14 @@
 -type code_editor() :: #code_editor{}.
 
 %%%_* Code  ====================================================================
+%% @doc Create the table for code editor.
+%%      Function signature @see mnesia:create_table/2
+create_table() ->
+  mnesia:create_table( code_editor
+                     , [ {attributes  , record_info(fields, code_editor)}
+                       , {record_name , code_editor}
+                       , {ram_copies, [node()]}]).
+
 -spec read(Id :: integer()) -> code_editor().
 read(Id) ->
   [CodeEditor] = mnesia:dirty_read(?TAB_NAME, Id),
@@ -79,11 +88,15 @@ set_z(#code_editor{} = CodeEditor, Z) ->
   CodeEditor#code_editor{z = Z}.
 
 %% @doc convert article record to json binary
-to_json(#code_editor{} = CodeEditor) ->
-  CodeEditorFields = { struct
-                     , lists:zip( record_info(fields, code_editor)
-                                , tl(tuple_to_list(CodeEditor)))},
-  mochijson2:encode(CodeEditorFields).
+to_json(CodeEditors) when is_list(CodeEditors) ->
+  mochijson2:encode(lists:map(fun to_json_struct/1, CodeEditors));
+to_json(#code_editor{} = CodeEditor)           ->
+  mochijson2:encode(to_json_struct(CodeEditor)).
+
+to_json_struct(#code_editor{} = CodeEditor) ->
+  { struct
+  , lists:zip( record_info(fields, code_editor)
+             , tl(tuple_to_list(CodeEditor)))}.
 
 from_json(CodeEditorJson) ->
   {struct, CodeEditorFields} = mochijson2:decode(CodeEditorJson),

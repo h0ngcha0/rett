@@ -30,13 +30,17 @@ content_types_provided(RD, Ctx) ->
     {[{"application/json", to_json}], RD, Ctx}.
 
 to_json(RD, Ctx) ->
-  ct:pal("in to_json_editors resource"),
-  Result = list_to_binary("[{\"x\":\"1\",\"y\":\"1\",\"z\":\"1\",\"id\":\"0\",\"code\":\"bla\"},{\"x\":\"1\",\"y\":\"1\",\"z\":\"1\",\"id\":\"1\",\"code\":\"foo\"}]"),
-  %%Result = list_to_binary("[{x:1,y:1,z:1,id:0,code:bla},{x:1,y:1,z:1,id:1,code:foo}]"),
+  ct:pal("in to_json, editors resource"),
+  Result = code_editor:to_json(code_editor:read_all()),
+  ct:pal("Editors:~p", [list_to_binary(Result)]),
   {Result, RD, Ctx}.
 
 process_post(ReqData, State) ->
-  ct:pal("in post for editors resource"),
+  %% Assuming that only one editor could be added at a time.
+  %% TODO: add support for more than one editors
+  Editor = code_editor:from_json(wrq:req_body(ReqData)),
+  ok     = code_editor:write(Editor),
+  ct:pal("in post for editors resource:~p~n", [Editor]),
   {true, ReqData, State}.
 
 %%%_* Emacs ====================================================================

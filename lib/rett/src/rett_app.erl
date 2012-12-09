@@ -60,15 +60,15 @@ ensure_start(App) ->
   end.
 
 ensure_tables_exist() ->
-  lists:foreach(fun ensure_table_exist/1, dependent_tables()).
+  lists:foreach(fun ensure_table/1, table_modules()).
 
-ensure_table_exist(Tab) ->
-  case mnesia:create_table(Tab, []) of
-    {aborted,{already_exists,Tab}} -> ok;
-    {atomic, ok}                   -> ok
+ensure_table(Mod) ->
+  case Mod:create_table() of
+    {aborted,{already_exists,_}} -> ok;
+    {atomic, ok}                 -> ok
   end.
 
-dependent_tables() ->
+table_modules() ->
   [ code_editor
   ].
 
