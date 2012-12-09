@@ -8,6 +8,7 @@
 %%%_* Exports =================================================================
 -export([ allowed_methods/2
         , content_types_provided/2
+        , delete_resource/2
         , init/1
         , process_post/2
         , to_json/2
@@ -41,6 +42,12 @@ process_post(ReqData, State) ->
   Editor = code_editor:from_json(wrq:req_body(ReqData)),
   ok     = code_editor:write(Editor),
   ct:pal("in post for editors resource:~p~n", [Editor]),
+  {true, ReqData, State}.
+
+delete_resource(ReqData, State) ->
+  Editor = code_editor:from_json(wrq:req_body(ReqData)),
+  ct:pal("in delete for editors resource:~p~n", [Editor]),
+  ok     = code_editor:delete(code_editor:get_id(Editor)),
   {true, ReqData, State}.
 
 %%%_* Emacs ====================================================================
