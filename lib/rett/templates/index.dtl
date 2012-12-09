@@ -12,6 +12,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/docs.css" />
 
     <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui-1.9.2.custom.min.js"></script>
     <script type="text/javascript" src="/static/js/underscore.js"></script>
     <script type="text/javascript" src="/static/js/backbone.js"></script>
     <script type="text/javascript" src="/static/js/prettify.js"></script>
@@ -23,8 +24,7 @@
 
     <script type="text/javascript">
       $(document).ready(function() {
-        var router = new window.RettRouter();
-        router.start();
+        g_appview = new AppView();
       });
     </script>
 
@@ -45,7 +45,17 @@
         </div>
       </div>
     </div>
-    <div id="content" class="container">
+    <!--
+    <form id="new-code" action="fun" method="post">
+      <label>ID:</label><input id="code-id-input" name="code-id" type="text"/>
+      <label>Code:</label><input id="code-snippet-input" name="code-snippet" type="text"/>
+      <button>Post</button>
+    </form>
+    -->
+    <hr/>
+    <div id="rett" class="container">
+      <div id="code-editors" class="container">
+      </div>
     </div>
   </body>
 </html>

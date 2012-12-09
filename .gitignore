@@ -14,3 +14,5 @@ deps
 index.html
 all_runs.html
 erl_crash.dump
+Mnesia*
+todo.org
