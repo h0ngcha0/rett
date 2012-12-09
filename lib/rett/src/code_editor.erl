@@ -88,6 +88,8 @@ set_z(#code_editor{} = CodeEditor, Z) ->
   CodeEditor#code_editor{z = Z}.
 
 %% @doc convert article record to json binary
+to_json([])                                    ->
+  [];
 to_json(CodeEditors) when is_list(CodeEditors) ->
   mochijson2:encode(lists:map(fun to_json_struct/1, CodeEditors));
 to_json(#code_editor{} = CodeEditor)           ->
