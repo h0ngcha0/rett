@@ -12,6 +12,7 @@
         , delete/1
         , delete_all/0
         , write/1
+        , get_id/1
         , set_id/2
         , set_code/2
         , set_x/2
@@ -71,6 +72,9 @@ delete_all() ->
   lists:foreach(fun(Key) ->
                     ok = delete(Key)
                 end, mnesia:dirty_all_keys(?TAB_NAME)).
+
+get_id(#code_editor{id = Id}) ->
+  Id.
 
 set_id(#code_editor{} = CodeEditor, Id) ->
   CodeEditor#code_editor{id = Id}.
