@@ -7,6 +7,7 @@
 
 %%%_* Exports =================================================================
 -export([ allowed_methods/2
+        , content_types_accepted/2
         , content_types_provided/2
         , delete_resource/2
         , init/1
@@ -25,13 +26,20 @@ init([]) ->
 %% This should take a list of the functions that we wanna display and display
 %% it on the web page
 allowed_methods(ReqData, State) ->
-  {['GET', 'POST', 'PUT'], ReqData, State}.
+  {['GET', 'POST', 'PUT', 'DELETE'], ReqData, State}.
 
 content_types_provided(RD, Ctx) ->
-    {[{"application/json", to_json}], RD, Ctx}.
+  {[{"application/json", to_json}], RD, Ctx}.
+
+content_types_accepted(RD, Ctx) ->
+  CT = case wrq:get_req_header("content-type", RD) of
+         undefined -> "application/json";
+         X         -> X
+       end,
+  {MT, _Params} = webmachine_util:media_type_to_detail(CT),
+  {[{MT, process_post}], RD, Ctx}.
 
 to_json(RD, Ctx) ->
-  ct:pal("in to_json, editors resource"),
   Result = code_editor:to_json(code_editor:read_all()),
   ct:pal("Editors:~p", [list_to_binary(Result)]),
   {Result, RD, Ctx}.
@@ -41,13 +49,12 @@ process_post(ReqData, State) ->
   %% TODO: add support for more than one editors
   Editor = code_editor:from_json(wrq:req_body(ReqData)),
   ok     = code_editor:write(Editor),
-  ct:pal("in post for editors resource:~p~n", [Editor]),
   {true, ReqData, State}.
 
 delete_resource(ReqData, State) ->
-  Editor = code_editor:from_json(wrq:req_body(ReqData)),
-  ct:pal("in delete for editors resource:~p~n", [Editor]),
-  ok     = code_editor:delete(code_editor:get_id(Editor)),
+  [Id] = wrq:path_tokens(ReqData),
+  ct:pal("delete editor, id:~p~n", [Id]),
+  ok   = code_editor:delete(list_to_binary(Id)),
   {true, ReqData, State}.
 
 %%%_* Emacs ====================================================================
