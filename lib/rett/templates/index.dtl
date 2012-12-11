@@ -42,18 +42,10 @@
       <div class="navbar-inner">
         <div class="container">
           <!-- show the app name -->
-          <a class="brand" href="#">Realtime Erlang Editor</a>
+          <a class="brand" href="#">RTEE</a>
         </div>
       </div>
     </div>
-    <!--
-    <form id="new-code" action="fun" method="post">
-      <label>ID:</label><input id="code-id-input" name="code-id" type="text"/>
-      <label>Code:</label><input id="code-snippet-input" name="code-snippet" type="text"/>
-      <button>Post</button>
-    </form>
-    -->
-    <hr/>
     <div id="rett" class="container">
       <div id="code-editors" class="container">
       </div>
