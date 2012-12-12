@@ -1,3 +1,18 @@
+;; send function body to web
+(defun put-function-body-on-web-with-rest (x y z method id code)
+  (interactive)
+  (let* ((url                       (concat "http://localhost:8642/editors/" id))
+         (url-request-method        method)
+         (url-request-extra-headers (list '("Content-Type" . "application/json")))
+         (url-request-data          (concat "{\"x\":" x ",\"y\":" y ",\"z\":" z ",\"id\":\"" id "\",\"code\":\"" code "\"}"))
+         (url-show-status           nil))
+    (edts-log-debug "Sending %s-request to %s" "PUT" url)
+    (let ((buffer (url-retrieve-synchronously url)))
+      (print (buffer-substring (point-min) (point-max))))))
+      ;;(when buffer
+        ;;(with-current-buffer buffer
+          ;;(edts-rest-parse-http-response))))))
+
 (defun search-local-function-and-print (function arity)
   "Goto the definition of FUNCTION/ARITY in the current buffer."
   (let ((origin (point))
@@ -15,7 +30,9 @@
 	       ;; output function body and goto original position
 	       (erlang-end-of-function)
 	       (setq end  (point))
-	       (write-region start end "~/test.txt")
+	       ;; push function body on webserver, with parameters x y z method id code
+	       (put-function-body-on-web-with-rest "1" "1" "1" "PUT" "10000" (buffer-substring start end))
+	       ;;(write-region start end "~/test.txt")
 	       (goto-char origin)
 	       (setq searching nil)))
 	    (t
@@ -54,7 +71,10 @@ When FUNCTION is specified, the point is moved to its start."
 		  (setq start (point))
 		  (erlang-end-of-function)
 		  (setq end (point))
-		  (write-region start end "~/test.txt")
+		  ;; push function body on webserver, with parameters x y z method id code
+		  (put-function-body-on-web-with-rest "1" "1" "1" "PUT" "10000" (buffer-substring start end))
+
+		  ;;(write-region start end "~/test.txt")
 	      ))
               (null
                (error "Function %s:%s/%s not found" module function arity)
@@ -70,5 +90,8 @@ When FUNCTION is specified, the point is moved to its start."
    ((apply #'find-source
            (or (ferl-mfa-at-point) (error "No call at point."))))))
 
-(add-hook 'before-save-hook 'find-source-under-point)
-;; end region
+
+
+
+
+;;(remove-hook 'before-save-hook 'find-source-under-point)
