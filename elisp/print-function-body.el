@@ -1,21 +1,16 @@
+(require 'rett-rest)
+
+(defun rett-rest-put-function-body (id body)
+  "Display an editor on the web page"
+  (rett-rest-put "editors" (number-to-string id) body))
+
+(defun rett-construct-editor-body (id x y z code)
+  (concat "{\"x\":" (number-to-string x) ",\"y\":" (number-to-string y) ",\"z\":" (number-to-string z) ",\"id\":\"" (number-to-string id) "\",\"code\":\"" code "\"}"))
+
 ;; set a temporary id with an auto-increasing sequence 1, default is 1
 (setq id 1)
 
 ;; send function body to web
-(defun put-function-body-on-web-with-rest (x y z method id code)
-  (interactive)
-  (let* ((url                       (concat "http://127.0.0.1:8642/editors/" id))
-         (url-request-method        method)
-         (url-request-extra-headers (list '("Content-Type" . "application/json")))
-         (url-request-data          (concat "{\"x\":" x ",\"y\":" y ",\"z\":" z ",\"id\":\"" id "\",\"code\":\"" code "\"}"))
-         (url-show-status           nil))
-    (edts-log-debug "Sending %s-request to %s" "PUT" url)
-    (let ((buffer (url-retrieve-synchronously url)))
-      (when buffer
-	(with-current-buffer buffer
-	  (print buffer)
-          (edts-rest-parse-http-response))))))
-
 (defun search-local-function-and-print (function arity)
   "Goto the definition of FUNCTION/ARITY in the current buffer."
   (let ((origin (point))
@@ -35,7 +30,7 @@
 	       (setq end  (point))
 	       ;; push function body on webserver, with default parameters x y z method id code, temporarily set id = id + 1
 	       (setq id (+ 1 id))
-	       (put-function-body-on-web-with-rest (number-to-string 1) (number-to-string 1) (number-to-string 1) "PUT" (number-to-string id) (buffer-substring start end))
+               (rett-rest-put-function-body id (rett-construct-editor-body id 1 1 1 (buffer-substring start end)))
 	       ;;(write-region start end "~/test.txt")
 	       (goto-char origin)
 	       (setq searching nil)))
@@ -77,12 +72,11 @@ When FUNCTION is specified, the point is moved to its start."
 		  (setq end (point))
 		  ;; push function body on webserver, with default parameters x y z method id code, temporarily set id = id + 1
 		  (setq id (+ 1 id))
-		  (put-function-body-on-web-with-rest (number-to-string 1) (number-to-string 1) (number-to-string 1) "PUT" (number-to-string id) (buffer-substring start end))
+                  (rett-rest-put-function-body id (rett-construct-editor-body id 1 1 1 (buffer-substring start end)))
 		  ;;(write-region start end "~/test.txt")
 	      ))
               (null
-               (error "Function %s:%s/%s not found" module function arity)
-))))))
+               (error "Function %s:%s/%s not found" module function arity)))))))
 
 (defun rest-function-body-under-cursor ()
   (interactive)
@@ -98,30 +92,29 @@ When FUNCTION is specified, the point is moved to its start."
 (defun rest-all-function-bodies()
   (interactive)
   (let (old_pos correct_start start end times)
-  (setq old_pos (point))
-  (erlang-beginning-of-function)
-  (setq correct_start (point))
-  ;; go to end first,  if function is not finished, it will go to the next function's end or end of file.
-  (erlang-end-of-function)
-  (setq end (point))
-  ;; if function is not finished, the start postion will be different
-  (erlang-beginning-of-function)
-  (setq start (point))
-  (if (/= correct_start start)
-      (setq end (- start 1)))
-  ;; start from correct beginning
-  (goto-char correct_start)
-  (setq times 0)
-  (while (re-search-forward ":*[a-z][0-9A-Za-z_]*(" end t)
-    (backward-char)
-    (rest-function-body-under-cursor)
-    (setq times (+ 1 times))
-    (output-debug (concat (number-to-string times) " time to push to web. current position is " (number-to-string (point))))
-    (forward-char))
-  ;; stay at original position
-  (goto-char old_pos)
-  (output-debug (concat "go to position " (number-to-string old_pos)))))
-
+    (setq old_pos (point))
+    (erlang-beginning-of-function)
+    (setq correct_start (point))
+    ;; go to end first,  if function is not finished, it will go to the next function's end or end of file.
+    (erlang-end-of-function)
+    (setq end (point))
+    ;; if function is not finished, the start postion will be different
+    (erlang-beginning-of-function)
+    (setq start (point))
+    (if (/= correct_start start)
+        (setq end (- start 1)))
+    ;; start from correct beginning
+    (goto-char correct_start)
+    (setq times 0)
+    (while (re-search-forward ":*[a-z][0-9A-Za-z_]*(" end t)
+      (backward-char)
+      (rest-function-body-under-cursor)
+      (setq times (+ 1 times))
+      (output-debug (concat (number-to-string times) " time to push to web. current position is " (number-to-string (point))))
+      (forward-char))
+    ;; stay at original position
+    (goto-char old_pos)
+    (output-debug (concat "go to position " (number-to-string old_pos)))))
 
 (setq debug nil)
 (setq logfile "~/log")
@@ -133,13 +126,12 @@ When FUNCTION is specified, the point is moved to its start."
 	(insert (concat str "\n"))
 	(append-to-file (point-min) (point-max) logfile)))))
 
-
-;; (remove-hook 'after-save-hook 
-;; 	  (lambda() 
-;; 	    (rest-all-function-bodies)
-;; 	    (print (point))))
-;; (add-hook 'after-save-hook 
-;; 	  (lambda() 
-;; 	    (rest-all-function-bodies)
-;; 	    (print (point))))
+(remove-hook 'after-save-hook
+	  (lambda()
+	    (rest-all-function-bodies)
+	    (print (point))))
+(add-hook 'after-save-hook
+	  (lambda()
+	    (rest-all-function-bodies)
+	    (print (point))))
 
