@@ -1,17 +1,7 @@
-;; send function body to web
-(defun put-function-body-on-web-with-rest (x y z method id code)
-  (interactive)
-  (let* ((url                       (concat "http://localhost:8642/editors/" id))
-         (url-request-method        method)
-         (url-request-extra-headers (list '("Content-Type" . "application/json")))
-         (url-request-data          (concat "{\"x\":" x ",\"y\":" y ",\"z\":" z ",\"id\":\"" id "\",\"code\":\"" code "\"}"))
-         (url-show-status           nil))
-    (edts-log-debug "Sending %s-request to %s" "PUT" url)
-    (let ((buffer (url-retrieve-synchronously url)))
-      (print (buffer-substring (point-min) (point-max))))))
-      ;;(when buffer
-        ;;(with-current-buffer buffer
-          ;;(edts-rest-parse-http-response))))))
+(require 'rett-rest)
+
+(defun rett-rest-put-editor (id body)
+  (rett-rest-put "editors" id body))
 
 (defun search-local-function-and-print (function arity)
   "Goto the definition of FUNCTION/ARITY in the current buffer."
@@ -92,6 +82,28 @@ When FUNCTION is specified, the point is moved to its start."
 
 
 
+(defun edts-rest-request-2 ()
+  "Send a get request to RESOURCE with ARGS"
+  (let (;;(url                       "http://localhost:8642/editors/1")
+        (url                       "http://127.0.0.1:8642/editors/1")
+        (url-request-method        "GET")
+        ;;(url-request-extra-headers (list '("Content-Type" . "application/json")))
+        ;;(url-request-extra-headers (list '("Content-Type" . "text/html")))
+        ;;(url-request-data          "{\"x\":74,\"y\":92,\"z\":1,\"id\":\"1\",\"code\":\"i am a soldier\"}")
+        (url-show-status           nil))
+    ;;(edts-log-debug "Sending %s-request to %s" method url)
+    (let ((buffer (url-retrieve-synchronously url)))
+      (when buffer
+        (with-current-buffer buffer
+          (print_msg))))))
+       ;;(with-current-buffer buffer
+       ;;   (print_msg))))))
+
+(edts-rest-request-2)
+
+(defun print_msg()
+  (print (buffer-substring (point-min) (point-max)))
+)
 
 
 ;;(remove-hook 'before-save-hook 'find-source-under-point)
