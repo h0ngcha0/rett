@@ -13,46 +13,43 @@
 ;; send function body to web
 (defun search-local-function-and-print (function arity)
   "Goto the definition of FUNCTION/ARITY in the current buffer."
-  (let ((origin (point))
-	(str (concat "\n" function "("))
-	(searching t)
-	start end)
-    (goto-char (point-min))
-    (while searching
-      (cond ((search-forward str nil t)
-	     (backward-char)
-	     (when (or (null arity)
-		       (eq (ferl-arity-at-point) arity))
-	       (beginning-of-line)
-	       (setq start  (point))
-	       ;; output function body and goto original position
-	       (erlang-end-of-function)
-	       (setq end  (point))
-	       ;; push function body on webserver, with default parameters x y z method id code, temporarily set id = id + 1
-	       (setq id (+ 1 id))
-               (rett-rest-put-function-body id (rett-construct-editor-body id 1 1 1 (buffer-substring start end)))
-	       ;;(write-region start end "~/test.txt")
-	       (goto-char origin)
-	       (setq searching nil)))
-	    (t
-	     (setq searching nil)
-	     (goto-char origin)
-	     (if arity
-		 (message "Couldn't find function %S/%S" function arity)
-	       (message "Couldn't find function %S" function)))))))
+  (save-excursion
+    (let ((str (concat "\n" function "("))
+          (searching t)
+          start end)
+      (goto-char (point-min))
+      (while searching
+        (cond ((search-forward str nil t)
+               (backward-char)
+               (when (or (null arity)
+                         (eq (ferl-arity-at-point) arity))
+                 (setq start (progn (beginning-of-line) (point)))
+                 ;; output function body and goto original position
+                 ;; !bug fixed: if function is not finished, erlang-end-of-function will get the end of next function
+                 ;;(setq end (progn (erlang-end-of-function) (point)))
+                 (save-excursion
+                   (setq end (get-function-end start)))
+                 ;; push function body on webserver, with default parameters x y z method id code, temporarily set id = id + 1
+                 (setq id (1+ id))
+                 (rett-rest-put-function-body id (rett-construct-editor-body id 1 1 1 (buffer-substring-no-properties start end)))
+                 ;;(write-region start end "~/test.txt")
+                 (setq searching nil)))
+              (t
+               (setq searching nil)
+               (if arity
+                   (message "Couldn't find function %S/%S" function arity)
+                 (message "Couldn't find function %S" function))))))))
 
 (defun find-source (module function arity)
   "Find the source code for MODULE in a buffer, loading it if necessary.
 When FUNCTION is specified, the point is moved to its start."
   (interactive)
-  ;; Add us to the history list
-  (let ((mark (copy-marker (point-marker))) start end)
+  (let (start end)
     (if (or (equal module (erlang-get-module))
             (string-equal module "MODULE"))
 	;; try to look for function in current buffer
         (if function
             (progn
-              (ring-insert-at-beginning (edts-window-history-ring) mark)
               (search-local-function-and-print function arity))
             (null (error "Function %s:%s/%s not found" module function arity)))
         ;; look for function in other files Issue
@@ -62,17 +59,14 @@ When FUNCTION is specified, the point is moved to its start."
 	      ;; if function is found, use temp buffer to open the source file and locate the function body and output.
 	      (with-temp-buffer
 		(progn
-		  ;;(find-file-existing (cdr (assoc 'source info)))
 		  (insert-file-contents (cdr (assoc 'source info)))
-		  (ring-insert-at-beginning (edts-window-history-ring) mark)
 		  (goto-line (cdr (assoc 'line info)))
 		  ;;(write-region (point-min) (point-max) "~/test.txt")
 		  (setq start (point))
-		  (erlang-end-of-function)
-		  (setq end (point))
+		  (setq end (progn (erlang-end-of-function) (point)))
 		  ;; push function body on webserver, with default parameters x y z method id code, temporarily set id = id + 1
 		  (setq id (+ 1 id))
-                  (rett-rest-put-function-body id (rett-construct-editor-body id 1 1 1 (buffer-substring start end)))
+                  (rett-rest-put-function-body id (rett-construct-editor-body id 1 1 1 (buffer-substring-no-properties start end)))
 		  ;;(write-region start end "~/test.txt")
 	      ))
               (null
@@ -91,30 +85,48 @@ When FUNCTION is specified, the point is moved to its start."
 ;; rest all function bodies
 (defun rest-all-function-bodies()
   (interactive)
-  (let (old_pos correct_start start end times)
-    (setq old_pos (point))
-    (erlang-beginning-of-function)
-    (setq correct_start (point))
-    ;; go to end first,  if function is not finished, it will go to the next function's end or end of file.
-    (erlang-end-of-function)
-    (setq end (point))
-    ;; if function is not finished, the start postion will be different
-    (erlang-beginning-of-function)
-    (setq start (point))
-    (if (/= correct_start start)
-        (setq end (- start 1)))
-    ;; start from correct beginning
-    (goto-char correct_start)
-    (setq times 0)
-    (while (re-search-forward ":*[a-z][0-9A-Za-z_]*(" end t)
-      (backward-char)
-      (rest-function-body-under-cursor)
-      (setq times (+ 1 times))
-      (output-debug (concat (number-to-string times) " time to push to web. current position is " (number-to-string (point))))
-      (forward-char))
-    ;; stay at original position
-    (goto-char old_pos)
-    (output-debug (concat "go to position " (number-to-string old_pos)))))
+  (save-excursion
+    (let (funcall_point fun_start fun_end)
+      (setq fun_start (progn (erlang-beginning-of-function) (point)))
+      ;; get the end point of current function
+      (setq fun_end (get-function-end fun_start))
+      (while (re-search-forward ":?[a-z][0-9A-Za-z_]*[ \t]*(" fun_end t)
+        (setq funcall_point (point))
+        (backward-char)
+        (skip-chars-backward "[ \t]*")
+        (rest-function-body-under-cursor)
+        (goto-char funcall_point)))))
+
+;; return the function's end point with no moved cursor
+(defun get-function-end(fun_start)
+  (save-excursion
+    ;; erlang function definition head regexp
+    (let ((fun_head_query "^[ \t]*[a-z][a-zA-Z0-9_]*[ \t]*([ \t]*\\([A-Z_][a-zA-Z0-9_]*,[ \t]*\\)*[A-Z_][a-zA-Z0-9_]*[ \t]*)[ \t]*->.*"))
+      ;;     (fun_end_query ".*%+.*\\..*")
+      ;;     fun_line_start fun_line_end line_num)
+      ;; (setq fun_line_start (line-number-at-pos (goto-char fun_start)))
+      ;;  (end-of-line)
+       ;; get next function's head position
+      (end-of-line)
+       (if (re-search-forward fun_head_query nil t)
+           (progn
+             (previous-line)
+             ;; (setq fun_line_end (line-number-at-pos (point)))
+             ;; ;; try to find '.' as the end of current function if the function is finished
+             ;; (catch 'found_fun_end
+             ;;   (while (>= fun_line_end fun_line_start)
+             ;;     (goto-line fun_line_end)
+             ;;   ;; search '.' in current line
+             ;;     (if (re-search-forward "^[^%]*\\." (line-end-position) t)
+             ;;         (throw 'found_fun_end nil)
+             ;;      (setq fun_line_end (1- fun_line_end)))))
+             (line-end-position))
+             ;; set current function end as buffer end if no more function definition
+             (point-max)))))
+
+
+
+
 
 (setq debug nil)
 (setq logfile "~/log")
@@ -126,12 +138,11 @@ When FUNCTION is specified, the point is moved to its start."
 	(insert (concat str "\n"))
 	(append-to-file (point-min) (point-max) logfile)))))
 
-(remove-hook 'after-save-hook
-	  (lambda()
-	    (rest-all-function-bodies)
-	    (print (point))))
-(add-hook 'after-save-hook
-	  (lambda()
-	    (rest-all-function-bodies)
-	    (print (point))))
-
+ (remove-hook 'after-save-hook
+ 	  (lambda()
+ 	    (rest-all-function-bodies)
+ 	    (print (point))))
+ (add-hook 'after-save-hook
+ 	  (lambda()
+ 	    (rest-all-function-bodies)
+ 	    (print (point))))
